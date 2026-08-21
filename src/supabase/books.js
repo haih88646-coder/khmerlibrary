@@ -8,6 +8,7 @@ export const addBook = async (bookData) => {
       ...bookData,
       views: 0,
       downloads: 0,
+      reads: 0,
       isPublished: bookData.isPublished ?? true,
     })
     .select()
@@ -96,13 +97,26 @@ export const incrementDownloads = async (id) => {
   }
 };
 
+export const incrementReads = async (id) => {
+  const { error: rpcError } = await supabase.rpc('increment_reads', { book_id: id });
+  if (rpcError) {
+    const { data } = await supabase.from('books').select('reads').eq('id', id).single();
+    if (data) {
+      await supabase.from('books').update({ reads: (data.reads || 0) + 1 }).eq('id', id);
+    }
+  }
+};
+
 export const searchBooks = async (searchTerm, pageSize = 20) => {
-  const term = `%${searchTerm}%`;
+  // strip characters that break PostgREST or=() syntax
+  const clean = (searchTerm || '').replace(/[,()"\\]/g, ' ').trim();
+  if (!clean) return [];
+  const term = `%${clean}%`;
   const { data, error } = await supabase
     .from('books')
     .select('*')
     .eq('isPublished', true)
-    .or(`title_en.ilike.${term},title_km.ilike.${term},authorName.ilike.${term},tags.cs.{${searchTerm}}`)
+    .or(`title_en.ilike.${term},title_km.ilike.${term},authorName.ilike.${term}`)
     .order('title_en')
     .limit(pageSize);
   if (error) throw error;

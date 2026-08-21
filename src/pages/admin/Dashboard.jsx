@@ -10,7 +10,7 @@ import { formatDate } from '../../utils/helpers';
 
 export default function AdminDashboard() {
   const { lang, t } = useLanguage();
-  const [stats, setStats] = useState({ books: 0, users: 0, authors: 0, categories: 0, totalViews: 0, totalDownloads: 0 });
+  const [stats, setStats] = useState({ books: 0, users: 0, authors: 0, categories: 0, totalViews: 0, totalDownloads: 0, totalReads: 0 });
   const [recentBooks, setRecentBooks] = useState([]);
   const [popularBooks, setPopularBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +28,7 @@ export default function AdminDashboard() {
 
         const totalViews = booksRes.books.reduce((sum, b) => sum + (b.views || 0), 0);
         const totalDownloads = booksRes.books.reduce((sum, b) => sum + (b.downloads || 0), 0);
+        const totalReads = booksRes.books.reduce((sum, b) => sum + (b.reads || 0), 0);
 
         setStats({
           books: booksRes.books.length,
@@ -35,7 +36,8 @@ export default function AdminDashboard() {
           authors: auths.length,
           categories: cats.length,
           totalViews,
-          totalDownloads
+          totalDownloads,
+          totalReads
         });
         setRecentBooks(booksRes.books.slice(0, 5));
         setPopularBooks([...popularRes.books].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5));
@@ -56,7 +58,7 @@ export default function AdminDashboard() {
     { label: t('admin.totalAuthors'), value: stats.authors, icon: TrendingUp, color: 'bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-400' },
     { label: t('admin.totalCategories'), value: stats.categories, icon: Folder, color: 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' },
     { label: t('admin.totalDownloads'), value: stats.totalDownloads, icon: Download, color: 'bg-pink-50 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400' },
-    { label: t('admin.totalReads'), value: stats.totalViews, icon: Eye, color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400' },
+    { label: t('admin.totalReads'), value: stats.totalReads, icon: Eye, color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400' },
   ];
 
   return (

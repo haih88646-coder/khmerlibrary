@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Heart, Download, Eye, Calendar, BookOpen, FileText, ArrowLeft, User, Globe, Hash, Clock, BarChart3 } from 'lucide-react';
+import { Heart, Download, Eye, Calendar, BookOpen, FileText, ArrowLeft, User, Globe, Hash, Clock, BarChart3, Users } from 'lucide-react';
 import Loading from '../components/common/Loading';
 import EmptyState from '../components/common/EmptyState';
 import Button from '../components/common/Button';
@@ -8,7 +8,7 @@ import BookCard from '../components/common/BookCard';
 import LoginPrompt from '../components/common/LoginPrompt';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { getBook, incrementViews, incrementDownloads, getBooks } from '../supabase/books';
+import { getBook, incrementViews, incrementDownloads, incrementReads, getBooks } from '../supabase/books';
 import { formatDate, formatFileSize } from '../utils/helpers';
 import { toast } from 'react-toastify';
 
@@ -76,6 +76,7 @@ export default function BookDetails() {
 
   const handleRead = () => {
     incrementViews(book.id).catch(() => {});
+    incrementReads(book.id).catch(() => {});
   };
 
   const readPath = book.fileType?.toLowerCase() === 'txt' ? `/read-txt/${book.id}` : `/read/${book.id}`;
@@ -182,6 +183,10 @@ export default function BookDetails() {
                 <div className="flex items-center gap-2 text-surface-600 dark:text-surface-400">
                   <Eye className="w-4 h-4 shrink-0" />
                   <span>{book.views || 0} {t('book.views')}</span>
+                </div>
+                <div className="flex items-center gap-2 text-surface-600 dark:text-surface-400">
+                  <Users className="w-4 h-4 shrink-0" />
+                  <span>{book.reads || 0} {t('book.readers')}</span>
                 </div>
                 <div className="flex items-center gap-2 text-surface-600 dark:text-surface-400">
                   <Download className="w-4 h-4 shrink-0" />

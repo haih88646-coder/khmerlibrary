@@ -6,6 +6,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useSiteSettings } from '../../contexts/SiteSettingsContext';
 import { useSearch } from '../../hooks/useBooks';
+import DonateModal from './DonateModal';
 
 export default function Navbar() {
   const { user, profile, isAdmin, logout } = useAuth();
@@ -20,6 +21,7 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [donateOpen, setDonateOpen] = useState(false);
   const searchRef = useRef(null);
   const userMenuRef = useRef(null);
   const { results, search, loading: searchLoading } = useSearch();
@@ -111,6 +113,13 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setDonateOpen(true)}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors shadow-sm"
+            >
+              <Heart className="w-4 h-4 fill-current" />
+              <span className={lang === 'km' ? 'font-khmer' : ''}>{t('nav.donate')}</span>
+            </button>
             <div ref={searchRef} className="relative">
               <button
                 onClick={() => setSearchOpen(!searchOpen)}
@@ -238,6 +247,12 @@ export default function Navbar() {
         {mobileOpen && (
           <div className="md:hidden border-t border-surface-200 dark:border-surface-700 py-3 fade-in">
             <div className="space-y-1">
+              <button
+                onClick={() => setDonateOpen(true)}
+                className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors text-left ${lang === 'km' ? 'font-khmer' : ''}`}
+              >
+                <Heart className="w-4 h-4 fill-current" /> {t('nav.donate')}
+              </button>
               {navLinks.map(({ to, label, icon: Icon }) => (
                 <Link key={to} to={to} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${location.pathname === to ? 'text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-primary-900/30' : 'text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:bg-surface-800'}`}>
                   <Icon className="w-4 h-4" /> {label}
@@ -283,6 +298,7 @@ export default function Navbar() {
           </div>
         )}
       </nav>
+      <DonateModal isOpen={donateOpen} onClose={() => setDonateOpen(false)} />
     </header>
   );
 }

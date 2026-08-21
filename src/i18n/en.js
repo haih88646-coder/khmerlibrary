@@ -15,7 +15,34 @@ const en = {
     admin: 'Dashboard',
     login: 'Sign In',
     signup: 'Sign Up',
-    logout: 'Sign Out'
+    logout: 'Sign Out',
+    donate: 'Donate'
+  },
+  donate: {
+    title: 'Support Us',
+    qrAlt: 'Bank QR Code',
+    noQr: 'QR code not available yet',
+    thanks: 'Thank you for your support!',
+    settingsTitle: 'Donate (Bank QR)',
+    uploadQr: 'Upload bank QR code image',
+    qrHint: 'Recommended: square image, PNG/JPG. Shown when users click the Donate button.',
+    textKm: 'Donate Text (Khmer)',
+    textEn: 'Donate Text (English)'
+  },
+  ai: {
+    title: 'Library AI Assistant',
+    subtitle: 'Your smart assistant for discovering Khmer library resources.',
+    greeting: 'Hello! I am the Khmer Library AI Assistant. I can help you search for books, recommend books based on your interests, summarize book information, and answer questions about using the library — in Khmer or English. How can I help you today?',
+    placeholder: 'Ask me anything...',
+    send: 'Send',
+    openChat: 'Open AI Assistant',
+    thinking: 'Thinking...',
+    chip1: 'Recommend me a book',
+    chip2: 'How do I download a book?',
+    chip3: 'What categories are available?',
+    chip4: 'Help me find a document',
+    error: 'Sorry, the assistant is unavailable right now. Please try again later.',
+    notConfigured: 'The AI assistant is not configured yet. Please add an OpenRouter API key.'
   },
   global: {
     title: 'Global Books',
@@ -77,6 +104,7 @@ const en = {
     uploadDate: 'Upload Date',
     views: 'Views',
     downloads: 'Downloads',
+    readers: 'Readers',
     description: 'Description',
     related: 'Related Books',
     noBooks: 'No books found',

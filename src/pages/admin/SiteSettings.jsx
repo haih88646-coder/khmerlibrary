@@ -3,7 +3,7 @@ import { Save, Upload, Image, RotateCcw } from 'lucide-react';
 import Button from '../../components/common/Button';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSiteSettings } from '../../contexts/SiteSettingsContext';
-import { updateSiteSettings, uploadLogo, uploadBanner } from '../../supabase/siteSettings';
+import { updateSiteSettings, uploadLogo, uploadBanner, uploadQrCode } from '../../supabase/siteSettings';
 import { validateCoverImage } from '../../utils/helpers';
 import { toast } from 'react-toastify';
 
@@ -13,7 +13,7 @@ export default function SiteSettingsPage() {
   const [form, setForm] = useState({
     name_km: '', name_en: '', tagline_km: '', tagline_en: '', logoUrl: '',
     footer_about_km: '', footer_about_en: '', contact_email: '', contact_website: '',
-    heroImageUrl: ''
+    heroImageUrl: '', donateQrUrl: '', donate_text_km: '', donate_text_en: ''
   });
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState('');
@@ -21,6 +21,9 @@ export default function SiteSettingsPage() {
   const [bannerFile, setBannerFile] = useState(null);
   const [bannerPreview, setBannerPreview] = useState('');
   const [bannerProgress, setBannerProgress] = useState(0);
+  const [qrFile, setQrFile] = useState(null);
+  const [qrPreview, setQrPreview] = useState('');
+  const [qrProgress, setQrProgress] = useState(0);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -35,10 +38,14 @@ export default function SiteSettingsPage() {
         footer_about_en: settings.footer_about_en || '',
         contact_email: settings.contact_email || '',
         contact_website: settings.contact_website || '',
-        heroImageUrl: settings.heroImageUrl || ''
+        heroImageUrl: settings.heroImageUrl || '',
+        donateQrUrl: settings.donateQrUrl || '',
+        donate_text_km: settings.donate_text_km || '',
+        donate_text_en: settings.donate_text_en || ''
       });
       setLogoPreview(settings.logoUrl || '');
       setBannerPreview(settings.heroImageUrl || '');
+      setQrPreview(settings.donateQrUrl || '');
     }
   }, [settings]);
 
@@ -60,6 +67,15 @@ export default function SiteSettingsPage() {
     setBannerPreview(URL.createObjectURL(file));
   };
 
+  const handleQr = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const validation = validateCoverImage(file);
+    if (!validation.valid) { toast.error(validation.error); return; }
+    setQrFile(file);
+    setQrPreview(URL.createObjectURL(file));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -74,11 +90,17 @@ export default function SiteSettingsPage() {
         const result = await uploadBanner(bannerFile, setBannerProgress);
         heroImageUrl = result.url;
       }
-      await updateSiteSettings({ ...form, logoUrl, heroImageUrl });
+      let donateQrUrl = form.donateQrUrl;
+      if (qrFile) {
+        const result = await uploadQrCode(qrFile, setQrProgress);
+        donateQrUrl = result.url;
+      }
+      await updateSiteSettings({ ...form, logoUrl, heroImageUrl, donateQrUrl });
       await refreshSettings();
       toast.success(t('common.success'));
       setUploadProgress(0);
       setBannerProgress(0);
+      setQrProgress(0);
     } catch {
       toast.error(t('common.error'));
     } finally {
@@ -151,6 +173,50 @@ export default function SiteSettingsPage() {
               </div>
             )}
             <p className="text-xs text-surface-400">Recommended: 1920x600px or wider, JPG/PNG. Displayed behind the hero section.</p>
+          </div>
+        </div>
+
+        {/* Donate */}
+        <div className="bg-white dark:bg-surface-800 rounded-2xl border border-surface-200 dark:border-surface-700 p-6">
+          <h2 className={`text-lg font-semibold text-surface-900 dark:text-white mb-4 ${lang === 'km' ? 'font-khmer' : ''}`}>
+            {t('donate.settingsTitle')}
+          </h2>
+          <div className="space-y-4">
+            <div className="flex items-start gap-6">
+              <div className="w-40 h-40 rounded-xl bg-surface-100 dark:bg-surface-700 flex items-center justify-center overflow-hidden border border-surface-200 dark:border-surface-600 shrink-0">
+                {qrPreview ? (
+                  <img src={qrPreview} alt="Bank QR" className="w-full h-full object-contain" />
+                ) : (
+                  <Image className="w-8 h-8 text-surface-400" />
+                )}
+              </div>
+              <div className="flex-1">
+                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-surface-300 dark:border-surface-600 rounded-xl cursor-pointer hover:border-primary-400 transition-colors bg-surface-50 dark:bg-surface-900">
+                  <Upload className="w-6 h-6 text-surface-400 mb-1" />
+                  <span className="text-sm text-surface-500">{qrFile ? qrFile.name : t('donate.uploadQr')}</span>
+                  <input type="file" accept="image/*" onChange={handleQr} className="hidden" />
+                </label>
+                {qrProgress > 0 && qrProgress < 100 && (
+                  <div className="mt-2">
+                    <div className="h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+                      <div className="h-full bg-primary-500 rounded-full transition-all" style={{ width: `${qrProgress}%` }} />
+                    </div>
+                    <p className="text-xs text-surface-500 mt-1">{Math.round(qrProgress)}%</p>
+                  </div>
+                )}
+                <p className="text-xs text-surface-400 mt-2">{t('donate.qrHint')}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={`text-sm font-medium text-surface-700 dark:text-surface-300 mb-1.5 block ${lang === 'km' ? 'font-khmer' : ''}`}>{t('donate.textKm')}</label>
+                <textarea value={form.donate_text_km} onChange={(e) => update('donate_text_km', e.target.value)} rows={3} className="w-full px-4 py-2.5 bg-surface-50 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none text-surface-900 dark:text-white resize-none font-khmer" />
+              </div>
+              <div>
+                <label className={`text-sm font-medium text-surface-700 dark:text-surface-300 mb-1.5 block ${lang === 'km' ? 'font-khmer' : ''}`}>{t('donate.textEn')}</label>
+                <textarea value={form.donate_text_en} onChange={(e) => update('donate_text_en', e.target.value)} rows={3} className="w-full px-4 py-2.5 bg-surface-50 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none text-surface-900 dark:text-white resize-none" />
+              </div>
+            </div>
           </div>
         </div>
 

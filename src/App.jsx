@@ -12,6 +12,7 @@ import Footer from './components/common/Footer';
 import AdminLayout from './components/admin/AdminLayout';
 import PDFReader from './components/reader/PDFReader';
 import TXTReader from './components/reader/TXTReader';
+import AIAssistant from './components/common/AIAssistant';
 
 import Home from './pages/Home';
 import Browse from './pages/Browse';
@@ -112,6 +113,7 @@ export default function App() {
               pauseOnHover
               theme="colored"
             />
+            <AIAssistant />
             </SiteSettingsProvider>
           </AuthProvider>
         </LanguageProvider>

@@ -15,6 +15,9 @@ const defaultSettings = {
   contact_email: 'info@khmerlibrary.com',
   contact_website: 'khmerlibrary.com',
   heroImageUrl: '',
+  donateQrUrl: '',
+  donate_text_km: '',
+  donate_text_en: '',
 };
 
 export const getSiteSettings = async () => {
@@ -30,3 +33,5 @@ export const updateSiteSettings = async (data) => {
 };
 
 export { supabaseLogoUpload as uploadLogo, supabaseBannerUpload as uploadBanner };
+
+export { uploadQrCode } from './storage';

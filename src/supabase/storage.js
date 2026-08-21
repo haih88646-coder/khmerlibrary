@@ -34,3 +34,7 @@ export const uploadLogo = (file, onProgress) => {
 export const uploadBanner = (file, onProgress) => {
   return uploadFile(file, 'site', onProgress);
 };
+
+export const uploadQrCode = (file, onProgress) => {
+  return uploadFile(file, 'site', onProgress);
+};
