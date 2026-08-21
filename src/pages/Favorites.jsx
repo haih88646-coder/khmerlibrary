@@ -1,0 +1,50 @@
+import { Navigate } from 'react-router-dom';
+import BookCard from '../components/common/BookCard';
+import EmptyState from '../components/common/EmptyState';
+import Loading from '../components/common/Loading';
+import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useFavoriteBooks } from '../hooks/useBooks';
+import Button from '../components/common/Button';
+import { Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+export default function Favorites() {
+  const { user, favorites, loading: authLoading } = useAuth();
+  const { lang, t } = useLanguage();
+  const { books, loading } = useFavoriteBooks(favorites);
+
+  if (authLoading) return <Loading />;
+  if (!user) return <Navigate to="/login" replace />;
+
+  return (
+    <div className="min-h-screen bg-surface-50 dark:bg-surface-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center gap-3 mb-8">
+          <Heart className="w-6 h-6 text-red-500" />
+          <h1 className={`text-3xl font-bold text-surface-900 dark:text-white ${lang === 'km' ? 'font-khmer' : ''}`}>
+            {t('nav.favorites')}
+          </h1>
+        </div>
+
+        {loading ? (
+          <Loading />
+        ) : books.length === 0 ? (
+          <EmptyState
+            type="favorites"
+            title={t('book.noBooks')}
+            action={
+              <Link to="/browse">
+                <Button>{t('home.hero.cta')}</Button>
+              </Link>
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+            {books.map(book => <BookCard key={book.id} book={book} />)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
