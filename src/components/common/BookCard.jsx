@@ -3,9 +3,9 @@ import { Heart, Eye, Download, FileText } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { toast } from 'react-toastify';
-import { isArchiveId, stripArchivePrefix, getArchivePdfUrl } from '../../utils/archiveApi';
-import { isElibraryId, stripElibraryPrefix, getElibraryBookPdf } from '../../utils/elibraryApi';
-import { isBloomId, getBloomBookPageUrl } from '../../utils/bloomApi';
+import { isArchiveId } from '../../utils/archiveApi';
+import { isElibraryId } from '../../utils/elibraryApi';
+import { isBloomId } from '../../utils/bloomApi';
 
 export default function BookCard({ book, variant = 'default' }) {
   const { user, isFavorite, toggleFavorite } = useAuth();
@@ -13,7 +13,6 @@ export default function BookCard({ book, variant = 'default' }) {
   const navigate = useNavigate();
   const isArchive = isArchiveId(book.id);
   const isElibrary = isElibraryId(book.id);
-  const isBloom = isBloomId(book.id);
 
   const title = lang === 'km' ? (book.title_km || book.title_en) : (book.title_en || book.title_km);
   const author = lang === 'km' ? (book.authorName_km || book.authorName || book.authorName_en) : (book.authorName_en || book.authorName || book.authorName_km);
@@ -43,42 +42,13 @@ export default function BookCard({ book, variant = 'default' }) {
     }
   };
 
-  const openReader = async () => {
-    const win = window.open('about:blank', '_blank');
-    if (isElibrary) {
-      const url = await getElibraryBookPdf(stripElibraryPrefix(book.id)).catch(() => null);
-      if (url) {
-        win.location.href = url;
-      } else {
-        win.close();
-        toast.error(t('global.noReadableFile'));
-      }
-      return;
-    }
-    if (isArchive) {
-      const url = await getArchivePdfUrl(stripArchivePrefix(book.id));
-      if (url) {
-        win.location.href = url;
-      } else {
-        win.location.href = `https://archive.org/details/${book.archiveId}`;
-      }
-      return;
-    }
-    if (isBloom) {
-      win.location.href = book.fileUrl || book.link || getBloomBookPageUrl(book.bloomId);
-      return;
-    }
-    if (book.fileUrl) {
-      win.location.href = book.fileUrl;
-      return;
-    }
-    win.close();
-    navigate(`/book/${book.id}`);
-  };
+  // All books open their details page, where "Read Now" (opens the source
+  // PDF for external books) and the share buttons live.
+  const openDetails = () => navigate(`/book/${book.id}`);
 
   if (variant === 'compact') {
     return (
-      <div onClick={openReader} className="group flex gap-3 p-3 rounded-xl hover:bg-surface-50 dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer">
+      <div onClick={openDetails} className="group flex gap-3 p-3 rounded-xl hover:bg-surface-50 dark:hover:bg-surface-800 transition-all duration-200 cursor-pointer">
         <div className="w-14 h-20 rounded-lg bg-surface-200 dark:bg-surface-700 shrink-0 overflow-hidden shadow-sm">
           {book.coverUrl ? (
             <img src={book.coverUrl} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -104,7 +74,7 @@ export default function BookCard({ book, variant = 'default' }) {
 
   return (
     <div className="group block bg-white dark:bg-surface-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-surface-100 dark:border-surface-700/50 transition-all duration-300 hover:-translate-y-1">
-      <div onClick={openReader} className="cursor-pointer">
+      <div onClick={openDetails} className="cursor-pointer">
         <div className="relative aspect-[3/4] bg-surface-100 dark:bg-surface-700 overflow-hidden">
           {book.coverUrl ? (
             <img src={book.coverUrl} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -153,7 +123,7 @@ export default function BookCard({ book, variant = 'default' }) {
         </div>
       </div>
 
-      <div onClick={openReader} className="p-4 cursor-pointer">
+      <div onClick={openDetails} className="p-4 cursor-pointer">
         <h3 className={`book-title text-sm font-semibold line-clamp-2 text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors ${lang === 'km' ? 'font-khmer' : ''}`}>
           {title}
         </h3>
