@@ -42,7 +42,10 @@ const en = {
     chip3: 'What categories are available?',
     chip4: 'Help me find a document',
     error: 'Sorry, the assistant is unavailable right now. Please try again later.',
-    notConfigured: 'The AI assistant is not configured yet. Please add an OpenRouter API key.'
+    notConfigured: 'The AI assistant is not configured yet. Please add an OpenRouter API key.',
+    guestNotice: 'Guests get 1 free question — [create a free account](/signup) for unlimited questions.',
+    guestLimit: 'You have used your 1 free question as a guest. Create a free account to keep asking me anything — it only takes a minute! [Create your account](/signup) or [log in](/login).',
+    guestModal: 'You have used your 1 free question as a guest. Sign up or log in to continue using the AI assistant.'
   },
   global: {
     title: 'Global Books',
@@ -64,7 +67,8 @@ const en = {
   browse: {
     sourceLocal: 'My Library',
     sourceElibrary: 'eLibrary of Cambodia',
-    searchElibrary: 'Search 4,000+ Khmer books from eLibrary of Cambodia...'
+    searchElibrary: 'Search 4,000+ Khmer books from eLibrary of Cambodia...',
+    searchLocal: 'Search books in My Library...'
   },
   home: {
     hero: {

@@ -18,6 +18,8 @@ const defaultSettings = {
   donateQrUrl: '',
   donate_text_km: '',
   donate_text_en: '',
+  ai_provider: '',
+  ai_model: '',
 };
 
 export const getSiteSettings = async () => {

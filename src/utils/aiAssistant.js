@@ -2,9 +2,15 @@ import { supabase } from '../supabase/config';
 import { searchBooks } from '../supabase/books';
 import { getCategories } from '../supabase/categories';
 import { getSiteSettings } from '../supabase/siteSettings';
+import { getBloomKhmerBooks } from './bloomApi';
+import { searchElibraryBooks } from './elibraryApi';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENROUTER_MODELS_URL = 'https://openrouter.ai/api/v1/models';
+// NVIDIA NIM (build.nvidia.com) – called through a same-origin proxy
+// (/nvidia-api/*) because integrate.api.nvidia.com sends no CORS headers.
+// The proxy is configured in netlify.toml (production) and vite.config.js (dev).
+const NVIDIA_URL = '/nvidia-api/v1/chat/completions';
 
 // Preferred chat models (verified live on OpenRouter). The list is refreshed
 // automatically from the /models API; these are only used as fallbacks.
@@ -14,6 +20,47 @@ const PREFERRED_MODELS = [
   'google/gemma-4-31b-it:free',
   'openai/gpt-oss-20b:free',
 ];
+
+// NVIDIA NIM models available for live selection in the admin dashboard.
+export const NVIDIA_MODELS = [
+  'mistralai/mistral-nemotron',
+  'openai/gpt-oss-20b',
+];
+
+// Provider registry consumed by the admin dashboard as well.
+export const AI_PROVIDERS = [
+  { id: '', label: 'Auto', models: [] },
+  { id: 'openrouter', label: 'OpenRouter', models: PREFERRED_MODELS },
+  { id: 'nvidia', label: 'NVIDIA NIM', models: NVIDIA_MODELS },
+];
+
+const getProviderKey = (providerId) => {
+  if (providerId === 'nvidia') return import.meta.env.VITE_NVIDIA_API_KEY;
+  return import.meta.env.VITE_OPENROUTER_API_KEY;
+};
+
+const buildRequest = ({ provider, model }, messages) => {
+  const apiKey = getProviderKey(provider);
+  const headers = { 'Content-Type': 'application/json' };
+  let url;
+  if (provider === 'nvidia') {
+    url = NVIDIA_URL;
+    headers.Authorization = `Bearer ${apiKey}`;
+  } else {
+    url = OPENROUTER_URL;
+    headers.Authorization = `Bearer ${apiKey}`;
+    headers['HTTP-Referer'] = window.location.origin;
+    headers['X-Title'] = 'Khmer Digital Library';
+  }
+  return {
+    url,
+    options: {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ model, messages, temperature: 0.6, max_tokens: 1000 }),
+    },
+  };
+};
 
 // skip classifier / code-only / preview endpoints – not useful for chat
 const EXCLUDE_PATTERN = /content-safety|guard|moderation|embed|rerank|preview/i;
@@ -72,40 +119,105 @@ const extractKeywords = (text) => {
     .slice(0, 5);
 };
 
-const findRelevantBooks = async (message) => {
-  const found = new Map();
-  const add = (books) => (books || []).forEach((b) => { if (!found.has(b.id)) found.set(b.id, b); });
+// Words that hint at a language/region request rather than a title keyword
+const KHMER_HINTS = ['khmer', 'ខ្មែរ', 'cambodia', 'cambodian'];
 
-  try {
-    add(await searchBooks(message, 8).catch(() => []));
-    if (found.size < 4) {
-      for (const word of extractKeywords(message)) {
-        if (found.size >= 8) break;
-        add(await searchBooks(word, 5).catch(() => []));
+const scoreExternalBook = (b, keywords) => {
+  const hay = [b.title_km, b.title_en, b.authorName, (b.tags || []).join(' '), b.description_km]
+    .filter(Boolean).join(' ').toLowerCase();
+  return keywords.reduce((n, k) => n + (hay.includes(k) ? 1 : 0), 0);
+};
+
+const sourceOf = (id) => {
+  const s = String(id);
+  if (s.startsWith('bloom:')) return 'Bloom Library';
+  if (s.startsWith('elc:')) return 'eLibrary of Cambodia';
+  if (s.startsWith('ia:')) return 'Archive.org';
+  return 'library collection';
+};
+
+const findRelevantBooks = async (message) => {
+  const lower = (message || '').toLowerCase();
+  const wantsKhmer = KHMER_HINTS.some((h) => lower.includes(h));
+  const keywords = extractKeywords(message).filter((w) => !KHMER_HINTS.includes(w));
+
+  const found = new Map();
+  const add = (books) => (books || []).forEach((b) => { if (b && !found.has(b.id)) found.set(b.id, b); });
+
+  // 1) Our own Supabase catalog
+  const searchLocal = async () => {
+    const local = [];
+    try {
+      local.push(...(await searchBooks(message, 8).catch(() => [])));
+      if (local.length < 4 && keywords.length) {
+        for (const word of keywords) {
+          if (local.length >= 8) break;
+          local.push(...(await searchBooks(word, 5).catch(() => [])));
+        }
       }
-    }
-    if (found.size === 0) {
-      const { data } = await supabase
-        .from('books')
-        .select('*')
-        .eq('isPublished', true)
-        .order('views', { ascending: false })
-        .limit(8);
-      add(data);
-    }
-  } catch {
-    // ignore search errors – the model will just answer without book context
+      if (local.length === 0) {
+        const { data } = await supabase
+          .from('books')
+          .select('*')
+          .eq('isPublished', true)
+          .order('views', { ascending: false })
+          .limit(6);
+        local.push(...(data || []));
+      }
+    } catch { /* ignore */ }
+    return local;
+  };
+
+  // 2) Khmer community books from Bloom Library (cached list)
+  const searchBloom = async () => {
+    try {
+      const all = await getBloomKhmerBooks();
+      if (!all?.length) return [];
+      let list = [];
+      if (keywords.length) {
+        list = all
+          .map((b) => ({ b, score: scoreExternalBook(b, keywords) }))
+          .filter((x) => x.score > 0)
+          .sort((x, y) => y.score - x.score || (y.b.downloads || 0) - (x.b.downloads || 0))
+          .map((x) => x.b);
+      }
+      if (!list.length) {
+        // No keyword hit – fall back to popular/newest so general requests
+        // like "recommend a khmer book" always get real suggestions.
+        list = [...all].sort((a, z) =>
+          (wantsKhmer ? (z.downloads || 0) - (a.downloads || 0) : (z.views || 0) - (a.views || 0)));
+      }
+      return list.slice(0, 8);
+    } catch { return []; }
+  };
+
+  // 3) eLibrary of Cambodia (WordPress API)
+  const searchElibrary = async () => {
+    if (!keywords.length) return [];
+    try {
+      const res = await searchElibraryBooks(keywords[0], 1, 4);
+      return res.books || [];
+    } catch { return []; }
+  };
+
+  const results = await Promise.allSettled([searchLocal(), searchBloom(), searchElibrary()]);
+  results.forEach((r) => { if (r.status === 'fulfilled') add(r.value); });
+
+  // A request explicitly about Khmer books should always include some.
+  if (wantsKhmer && ![...found.values()].some((b) => String(b.id).startsWith('bloom:'))) {
+    try { add((await getBloomKhmerBooks()).slice(0, 6)); } catch { /* ignore */ }
   }
 
-  return [...found.values()].slice(0, 8).map((b) => ({
+  return [...found.values()].slice(0, 12).map((b) => ({
     id: b.id,
+    source: sourceOf(b.id),
     title_km: b.title_km,
     title_en: b.title_en,
     authorName: b.authorName,
     fileType: b.fileType,
     publicationYear: b.publicationYear,
-    description_km: (b.description_km || '').slice(0, 250),
-    description_en: (b.description_en || '').slice(0, 250),
+    description_km: (b.description_km || '').slice(0, 200),
+    description_en: (b.description_en || '').slice(0, 200),
   }));
 };
 
@@ -125,22 +237,23 @@ Your job:
 
 Rules:
 - Reply in the SAME language the user writes in: Khmer (ភាសាខ្មែរ) or English. If the message mixes both, reply in Khmer.
-- ONLY recommend books from AVAILABLE_BOOKS below. Never invent books. When mentioning a book, format it exactly as [Title](/book/ID) so it becomes a clickable link.
-- If no book matches, say so honestly and suggest browsing the library or trying different keywords.
+- ONLY recommend books from AVAILABLE_BOOKS below. Never invent books. When mentioning a book, format it exactly as [Title](/book/ID), copying ID character-for-character from the list INCLUDING its prefix (e.g. bloom:abc123 → /book/bloom:abc123).
+- The catalog combines our own library collection with free Khmer books from Bloom Library (SIL Global), eLibrary of Cambodia, and Archive.org. Every AVAILABLE_BOOKS entry is real, available on this website right now, and its /book/ID link works.
+- When a user asks generally for recommendations (e.g. "recommend a khmer book", "any good books?", "something for kids"), pick suitable titles from AVAILABLE_BOOKS instead of saying you found nothing.
+- If truly nothing in AVAILABLE_BOOKS matches a SPECIFIC request (a title/topic with zero related entries), say so honestly and suggest browsing or different keywords.
 - Library categories available: ${categories.map((c) => c.name_en || c.name_km).filter(Boolean).join(', ') || 'unknown'}.
 - Contact info: ${settings.contact_email || ''} ${settings.contact_website || ''}.
 - Keep answers short and friendly (under 150 words). Use bullet lists when recommending multiple books.`;
 };
 
 export const sendAssistantMessage = async (history) => {
-  const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-  if (!apiKey) throw Object.assign(new Error('missing-key'), { code: 'missing-key' });
-
   const lastUser = [...history].reverse().find((m) => m.role === 'user');
   const books = await findRelevantBooks(lastUser?.content || '');
   const system = await buildSystemPrompt();
-  const systemPrompt = `${system}\n\nAVAILABLE_BOOKS (id | title_km | title_en | author | year):\n${
-    books.map((b) => `- ${b.id} | ${b.title_km || '-'} | ${b.title_en || '-'} | ${b.authorName || '-'} | ${b.publicationYear || '-'}`).join('\n')
+  const systemPrompt = `${system}\n\nAVAILABLE_BOOKS (id | source | title_km | title_en | author | year | description):\n${
+    books.map((b) =>
+      `- ${b.id} | ${b.source} | ${b.title_km || '-'} | ${b.title_en || '-'} | ${b.authorName || '-'} | ${b.publicationYear || '-'} | ${(b.description_en || b.description_km || '').replace(/\s+/g, ' ').slice(0, 160) || '-'}`,
+    ).join('\n')
   }`;
 
   const messages = [
@@ -148,35 +261,62 @@ export const sendAssistantMessage = async (history) => {
     ...history.slice(-10),
   ];
 
-  const candidates = (await buildCandidates()).slice(0, 5);
+  // The admin-selected provider/model (stored in site settings) is always
+  // tried first; the remaining candidates act as automatic fallbacks so the
+  // chat keeps working if a provider is down.
+  const { ai_provider: selectedProvider = '', ai_model: selectedModel = '' } =
+    await getSiteSettings().catch(() => ({}));
+
+  const attempts = [];
+  const push = (provider, model) => {
+    if (!getProviderKey(provider)) return;
+    if (!attempts.some((a) => a.provider === provider && a.model === model)) {
+      attempts.push({ provider, model });
+    }
+  };
+
+  const openRouterCandidates = (await buildCandidates()).slice(0, 5);
+  if (selectedProvider === 'openrouter') {
+    if (selectedModel) push('openrouter', selectedModel);
+    openRouterCandidates.forEach((m) => push('openrouter', m));
+    NVIDIA_MODELS.forEach((m) => push('nvidia', m));
+  } else if (selectedProvider === 'nvidia') {
+    if (selectedModel) push('nvidia', selectedModel);
+    NVIDIA_MODELS.forEach((m) => push('nvidia', m));
+    openRouterCandidates.forEach((m) => push('openrouter', m));
+  } else {
+    openRouterCandidates.forEach((m) => push('openrouter', m));
+    NVIDIA_MODELS.forEach((m) => push('nvidia', m));
+  }
+
+  if (attempts.length === 0) {
+    throw Object.assign(new Error('missing-key'), { code: 'missing-key' });
+  }
+
   let lastError = new Error('failed');
-  for (const model of candidates) {
+  for (const attempt of attempts) {
     try {
-      const res = await fetch(OPENROUTER_URL, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'Khmer Digital Library',
-        },
-        body: JSON.stringify({ model, messages, temperature: 0.6, max_tokens: 1000 }),
-      });
+      const { url, options } = buildRequest(attempt, messages);
+      const res = await fetch(url, options);
       if (!res.ok) {
         let body = '';
         try { body = (await res.text()).slice(0, 200); } catch { /* ignore */ }
-        console.warn(`[AI] model "${model}" failed (${res.status}):`, body);
+        console.warn(`[AI] ${attempt.provider} model "${attempt.model}" failed (${res.status}):`, body);
         lastError = new Error(`http-${res.status}`);
         continue;
       }
       const data = await res.json();
-      const content = data.choices?.[0]?.message?.content;
-      if (!content) {
-        console.warn(`[AI] model "${model}" returned empty content, trying next`);
+      const msg = data.choices?.[0]?.message || {};
+      // Reasoning models (e.g. mistral-nemotron) may put the visible answer in
+      // reasoning_content or wrap it in <think>…</think> inside content.
+      const raw = String(msg.content || '').trim() ? msg.content : (msg.reasoning_content || '');
+      const cleaned = String(raw).replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+      if (!cleaned) {
+        console.warn(`[AI] ${attempt.provider} model "${attempt.model}" returned empty content, trying next`);
         lastError = new Error('empty-response');
         continue;
       }
-      return content.trim();
+      return cleaned;
     } catch (err) {
       lastError = err;
     }

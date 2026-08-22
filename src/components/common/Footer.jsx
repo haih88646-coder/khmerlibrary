@@ -97,6 +97,14 @@ export default function Footer() {
               >
                 Internet Archive (Archive.org) <ExternalLink className="w-3.5 h-3.5" />
               </a>
+              <a
+                href="https://bloomlibrary.org/language:km"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-sm text-surface-400 hover:text-white transition-colors"
+              >
+                Bloom Library by SIL Global <ExternalLink className="w-3.5 h-3.5" />
+              </a>
             </div>
           </div>
 

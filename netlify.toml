@@ -2,6 +2,14 @@
   command = "npm run build"
   publish = "dist"
 
+# Proxy for NVIDIA NIM API (build.nvidia.com) – integrate.api.nvidia.com sends
+# no CORS headers, so browser requests go through this same-origin rewrite.
+[[redirects]]
+  from = "/nvidia-api/*"
+  to = "https://integrate.api.nvidia.com/:splat"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

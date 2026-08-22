@@ -9,6 +9,9 @@ import LoginPrompt from '../components/common/LoginPrompt';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getBook, incrementViews, incrementDownloads, incrementReads, getBooks } from '../supabase/books';
+import { getBloomBooksByIds, isBloomId, stripBloomPrefix } from '../utils/bloomApi';
+import { getArchiveBooksByIds, isArchiveId, stripArchivePrefix, getArchivePdfUrl } from '../utils/archiveApi';
+import { getElibraryBooksByIds, isElibraryId, stripElibraryPrefix, getElibraryBookPdf } from '../utils/elibraryApi';
 import { formatDate, formatFileSize } from '../utils/helpers';
 import { toast } from 'react-toastify';
 
@@ -26,15 +29,25 @@ export default function BookDetails() {
     const load = async () => {
       setLoading(true);
       try {
-        const b = await getBook(id);
-        if (b) {
-          setBook(b);
-          if (b.categoryId) {
+        let b = null;
+        if (isBloomId(id)) {
+          const arr = await getBloomBooksByIds([stripBloomPrefix(id)]);
+          b = arr?.[0] || null;
+        } else if (isElibraryId(id)) {
+          const arr = await getElibraryBooksByIds([stripElibraryPrefix(id)]);
+          b = arr?.[0] || null;
+        } else if (isArchiveId(id)) {
+          const arr = await getArchiveBooksByIds([stripArchivePrefix(id)]);
+          b = arr?.[0] || null;
+        } else {
+          b = await getBook(id);
+          if (b?.categoryId) {
             getBooks({ category: b.categoryId, pageSize: 6, publishedOnly: false })
               .then(res => setRelated(res.books.filter(bo => bo.id !== id)))
               .catch(() => {});
           }
         }
+        setBook(b);
       } catch {
         setBook(null);
       } finally {
@@ -60,6 +73,8 @@ export default function BookDetails() {
     await toggleFavorite(book.id);
   };
 
+  const isExternal = isBloomId(book.id) || isElibraryId(book.id) || isArchiveId(book.id);
+
   const handleDownload = () => {
     if (!user) {
       setLoginPrompt({ open: true, message: t('auth.downloadRequired') });
@@ -70,13 +85,26 @@ export default function BookDetails() {
       link.href = book.fileUrl;
       link.download = `${title}.${book.fileType || 'pdf'}`;
       link.click();
-      incrementDownloads(book.id).catch(() => {});
+      if (!isExternal) incrementDownloads(book.id).catch(() => {});
     }
   };
 
   const handleRead = () => {
+    if (isExternal) return;
     incrementViews(book.id).catch(() => {});
     incrementReads(book.id).catch(() => {});
+  };
+
+  const openExternalBook = async () => {
+    let url = book.fileUrl || book.link || '';
+    if (!url && isElibraryId(book.id)) {
+      url = await getElibraryBookPdf(stripElibraryPrefix(book.id)).catch(() => '');
+    }
+    if (!url && isArchiveId(book.id)) {
+      const plain = stripArchivePrefix(book.id);
+      url = await getArchivePdfUrl(plain).catch(() => '') || `https://archive.org/details/${plain}`;
+    }
+    if (url) window.open(url, '_blank', 'noopener');
   };
 
   const readPath = book.fileType?.toLowerCase() === 'txt' ? `/read-txt/${book.id}` : `/read/${book.id}`;
@@ -108,11 +136,11 @@ export default function BookDetails() {
             <div className="flex-1 p-8">
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
-                  <h1 className={`text-2xl md:text-3xl font-bold text-surface-900 dark:text-white mb-1 ${lang === 'km' ? 'font-khmer' : ''}`}>
+                  <h1 className={`book-title text-2xl md:text-3xl font-bold text-surface-900 dark:text-white mb-1 ${lang === 'km' ? 'font-khmer' : ''}`}>
                     {title}
                   </h1>
                   {altTitle && (
-                    <p className={`text-lg text-surface-500 dark:text-surface-400 ${lang === 'km' ? '' : 'font-khmer'}`}>
+                    <p className={`book-title text-lg text-surface-500 dark:text-surface-400 ${lang === 'km' ? '' : 'font-khmer'}`}>
                       {altTitle}
                     </p>
                   )}
@@ -224,9 +252,13 @@ export default function BookDetails() {
               )}
 
               <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-surface-100 dark:border-surface-700">
-                <Link to={readPath} onClick={handleRead}>
-                  <Button size="lg" icon={BookOpen}>{t('book.readNow')}</Button>
-                </Link>
+                {isExternal ? (
+                  <Button size="lg" icon={BookOpen} onClick={openExternalBook}>{t('book.readNow')}</Button>
+                ) : (
+                  <Link to={readPath} onClick={handleRead}>
+                    <Button size="lg" icon={BookOpen}>{t('book.readNow')}</Button>
+                  </Link>
+                )}
                 <Button size="lg" variant="secondary" icon={Download} onClick={handleDownload}>
                   {t('book.download')}
                 </Button>

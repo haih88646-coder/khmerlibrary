@@ -4,6 +4,7 @@ import { getCategories } from '../supabase/categories';
 import { getAuthors } from '../supabase/authors';
 import { getArchiveBooksByIds, isArchiveId, stripArchivePrefix } from '../utils/archiveApi';
 import { getElibraryBooksByIds, isElibraryId, stripElibraryPrefix, searchElibraryBooks } from '../utils/elibraryApi';
+import { getBloomBooksByIds, isBloomId, stripBloomPrefix } from '../utils/bloomApi';
 
 export const useBooks = (options = {}) => {
   const [books, setBooks] = useState([]);
@@ -53,20 +54,23 @@ export const useFavoriteBooks = (favoriteIds) => {
       }
       setLoading(true);
       try {
-        const localIds = favoriteIds.filter(id => !isArchiveId(id) && !isElibraryId(id));
+        const localIds = favoriteIds.filter(id => !isArchiveId(id) && !isElibraryId(id) && !isBloomId(id));
         const archiveIds = favoriteIds.filter(isArchiveId).map(stripArchivePrefix);
         const elcIds = favoriteIds.filter(isElibraryId).map(stripElibraryPrefix);
+        const bloomIds = favoriteIds.filter(isBloomId).map(stripBloomPrefix);
 
-        const [localBooks, archiveBooks, elcBooks] = await Promise.all([
+        const [localBooks, archiveBooks, elcBooks, bloomBooks] = await Promise.all([
           localIds.length > 0 ? getBooksByIds(localIds) : Promise.resolve([]),
           archiveIds.length > 0 ? getArchiveBooksByIds(archiveIds) : Promise.resolve([]),
           elcIds.length > 0 ? getElibraryBooksByIds(elcIds) : Promise.resolve([]),
+          bloomIds.length > 0 ? getBloomBooksByIds(bloomIds) : Promise.resolve([]),
         ]);
 
         const byId = new Map();
         localBooks.forEach(b => byId.set(b.id, b));
         archiveBooks.forEach(b => byId.set(b.id, b));
         elcBooks.forEach(b => byId.set(b.id, b));
+        bloomBooks.forEach(b => byId.set(b.id, b));
         setBooks(favoriteIds.map(id => byId.get(String(id))).filter(Boolean));
       } catch {
         setBooks([]);

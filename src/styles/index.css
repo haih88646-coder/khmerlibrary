@@ -50,6 +50,7 @@
   --font-khmer: 'Noto Sans Khmer', sans-serif;
   --font-khmer-heading: 'Bayon', 'Noto Sans Khmer', sans-serif;
   --font-english: 'Noto Sans', sans-serif;
+  --font-book-title: 'Google Sans', 'Noto Sans Khmer', sans-serif;
 }
 
 html {
@@ -82,6 +83,15 @@ body.lang-km .font-extrabold,
 body.lang-km .font-black,
 body.lang-km .font-khmer-heading {
   font-family: var(--font-khmer-heading);
+}
+
+/* Google Sans + Noto Sans Khmer for all book titles (overrides Khmer heading fonts) */
+.book-title {
+  font-family: var(--font-book-title);
+}
+
+body.lang-km .book-title {
+  font-family: var(--font-book-title);
 }
 
 /* no bold in Khmer mode */

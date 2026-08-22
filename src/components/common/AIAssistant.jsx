@@ -2,7 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Bot, X, Send, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { sendAssistantMessage } from '../../utils/aiAssistant';
+import LoginPrompt from './LoginPrompt';
+
+const GUEST_QUOTA_KEY = 'ai_guest_question_used';
 
 const renderContent = (text) => {
   const nodes = [];
@@ -34,10 +38,12 @@ const renderContent = (text) => {
 
 export default function AIAssistant() {
   const { lang, t } = useLanguage();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loginPrompt, setLoginPrompt] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -52,15 +58,25 @@ export default function AIAssistant() {
     }
   }, [messages, loading]);
 
+  const guestQuotaUsed = !user && localStorage.getItem(GUEST_QUOTA_KEY) === '1';
+
   const send = useCallback(async (text) => {
     const content = (text ?? input).trim();
     if (!content || loading) return;
+    // Guests get exactly one question; after that, ask them to register.
+    if (!user && localStorage.getItem(GUEST_QUOTA_KEY) === '1') {
+      setInput('');
+      setMessages((prev) => [...prev, { role: 'assistant', content: t('ai.guestLimit') }]);
+      setLoginPrompt(true);
+      return;
+    }
     setInput('');
     const nextMessages = [...messages, { role: 'user', content }];
     setMessages(nextMessages);
     setLoading(true);
     try {
       const reply = await sendAssistantMessage(nextMessages);
+      if (!user) localStorage.setItem(GUEST_QUOTA_KEY, '1');
       setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
     } catch (err) {
       const msg = err?.code === 'missing-key' ? t('ai.notConfigured') : t('ai.error');
@@ -68,7 +84,7 @@ export default function AIAssistant() {
     } finally {
       setLoading(false);
     }
-  }, [input, loading, messages, t]);
+  }, [input, loading, messages, t, user]);
 
   const chips = [t('ai.chip1'), t('ai.chip2'), t('ai.chip3'), t('ai.chip4')];
 
@@ -140,6 +156,13 @@ export default function AIAssistant() {
             </div>
           )}
 
+          {/* Guest free-question notice */}
+          {user === null && !guestQuotaUsed && (
+            <div className={`px-3 pb-1 text-[11px] text-center text-surface-500 dark:text-surface-400 shrink-0 ${lang === 'km' ? 'font-khmer' : ''}`}>
+              {renderContent(t('ai.guestNotice'))}
+            </div>
+          )}
+
           {/* Input */}
           <form
             onSubmit={(e) => { e.preventDefault(); send(); }}
@@ -163,6 +186,12 @@ export default function AIAssistant() {
           </form>
         </div>
       )}
+
+      <LoginPrompt
+        isOpen={loginPrompt}
+        onClose={() => setLoginPrompt(false)}
+        message={t('ai.guestModal')}
+      />
     </>
   );
 }

@@ -5,6 +5,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { toast } from 'react-toastify';
 import { isArchiveId, stripArchivePrefix, getArchivePdfUrl } from '../../utils/archiveApi';
 import { isElibraryId, stripElibraryPrefix, getElibraryBookPdf } from '../../utils/elibraryApi';
+import { isBloomId, getBloomBookPageUrl } from '../../utils/bloomApi';
 
 export default function BookCard({ book, variant = 'default' }) {
   const { user, isFavorite, toggleFavorite } = useAuth();
@@ -12,6 +13,7 @@ export default function BookCard({ book, variant = 'default' }) {
   const navigate = useNavigate();
   const isArchive = isArchiveId(book.id);
   const isElibrary = isElibraryId(book.id);
+  const isBloom = isBloomId(book.id);
 
   const title = lang === 'km' ? (book.title_km || book.title_en) : (book.title_en || book.title_km);
   const author = lang === 'km' ? (book.authorName_km || book.authorName || book.authorName_en) : (book.authorName_en || book.authorName || book.authorName_km);
@@ -62,6 +64,10 @@ export default function BookCard({ book, variant = 'default' }) {
       }
       return;
     }
+    if (isBloom) {
+      win.location.href = book.fileUrl || book.link || getBloomBookPageUrl(book.bloomId);
+      return;
+    }
     if (book.fileUrl) {
       win.location.href = book.fileUrl;
       return;
@@ -83,7 +89,7 @@ export default function BookCard({ book, variant = 'default' }) {
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className={`text-sm font-semibold line-clamp-2 text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors ${lang === 'km' ? 'font-khmer' : ''}`}>
+          <h3 className={`book-title text-sm font-semibold line-clamp-2 text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors ${lang === 'km' ? 'font-khmer' : ''}`}>
             {title}
           </h3>
           <p className="text-xs text-surface-500 mt-0.5 truncate">{author}</p>
@@ -148,7 +154,7 @@ export default function BookCard({ book, variant = 'default' }) {
       </div>
 
       <div onClick={openReader} className="p-4 cursor-pointer">
-        <h3 className={`text-sm font-semibold line-clamp-2 text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors ${lang === 'km' ? 'font-khmer' : ''}`}>
+        <h3 className={`book-title text-sm font-semibold line-clamp-2 text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors ${lang === 'km' ? 'font-khmer' : ''}`}>
           {title}
         </h3>
         <p className="text-xs text-surface-500 mt-1 truncate">{author}</p>

@@ -12,6 +12,7 @@ const normalizeDoc = (doc) => ({
   publicationYear: doc.year || null,
   language: Array.isArray(doc.language) ? doc.language[0] : (doc.language || ''),
   coverUrl: `https://archive.org/services/img/${doc.identifier}`,
+  downloads: Number((Array.isArray(doc.downloads) ? doc.downloads[0] : doc.downloads) || 0),
 });
 
 export const searchArchiveBooks = async (searchTerm, page = 1, pageSize = PAGE_SIZE) => {
@@ -20,7 +21,7 @@ export const searchArchiveBooks = async (searchTerm, page = 1, pageSize = PAGE_S
     : 'mediatype:texts AND format:"Text PDF"';
   const params = new URLSearchParams();
   params.set('q', q);
-  ['identifier', 'title', 'creator', 'year', 'language'].forEach(f => params.append('fl[]', f));
+  ['identifier', 'title', 'creator', 'year', 'language', 'downloads'].forEach(f => params.append('fl[]', f));
   params.set('rows', pageSize);
   params.set('page', page);
   params.set('output', 'json');
