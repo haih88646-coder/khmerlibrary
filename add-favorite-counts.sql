@@ -12,7 +12,7 @@ SET search_path = public
 AS $$
   SELECT f.fav AS book_id, COUNT(*)::bigint AS fav_count
   FROM public.users u
-  CROSS JOIN LATERAL UNNEST(u.favorites) AS f(fav)
+  CROSS JOIN LATERAL jsonb_array_elements_text(u.favorites) AS f(fav)
   GROUP BY f.fav;
 $$;
 
