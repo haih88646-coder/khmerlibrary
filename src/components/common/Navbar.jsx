@@ -9,7 +9,7 @@ import { useSearch } from '../../hooks/useBooks';
 import DonateModal from './DonateModal';
 
 export default function Navbar() {
-  const { user, profile, isAdmin, logout } = useAuth();
+  const { user, profile, isAdmin, logout, favorites } = useAuth();
   const { lang, t, toggleLanguage } = useLanguage();
   const { isDark, toggleTheme } = useTheme();
   const { settings, getName } = useSiteSettings();
@@ -104,9 +104,14 @@ export default function Navbar() {
               {user && (
                 <Link
                   to="/favorites"
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${location.pathname === '/favorites' ? 'text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-primary-900/30' : 'text-surface-600 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800'}`}
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${location.pathname === '/favorites' ? 'text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-primary-900/30' : 'text-surface-600 hover:text-surface-900 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-white dark:hover:bg-surface-800'}`}
                 >
                   {t('nav.favorites')}
+                  {favorites.length > 0 && (
+                    <span className="px-1.5 min-w-[18px] text-center py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full leading-none">
+                      {favorites.length}
+                    </span>
+                  )}
                 </Link>
               )}
             </div>
@@ -211,6 +216,11 @@ export default function Navbar() {
                     </Link>
                     <Link to="/favorites" className="flex items-center gap-3 px-4 py-2.5 text-sm text-surface-700 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors">
                       <Heart className="w-4 h-4" /> {t('nav.favorites')}
+                      {favorites.length > 0 && (
+                        <span className="ml-auto px-1.5 min-w-[18px] text-center py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full leading-none">
+                          {favorites.length}
+                        </span>
+                      )}
                     </Link>
                     {isAdmin && (
                       <Link to="/admin" className="flex items-center gap-3 px-4 py-2.5 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors">
@@ -261,6 +271,11 @@ export default function Navbar() {
               {user && (
                 <Link to="/favorites" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${location.pathname === '/favorites' ? 'text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-primary-900/30' : 'text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:bg-surface-800'}`}>
                   <Heart className="w-4 h-4" /> {t('nav.favorites')}
+                  {favorites.length > 0 && (
+                    <span className={`ml-auto px-1.5 min-w-[18px] text-center py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full leading-none ${lang === 'km' ? 'font-khmer' : ''}`}>
+                      {favorites.length}
+                    </span>
+                  )}
                 </Link>
               )}
               <hr className="border-surface-200 dark:border-surface-700 my-2" />
