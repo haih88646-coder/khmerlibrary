@@ -2,6 +2,25 @@
   command = "npm run build"
   publish = "dist"
 
+# Security headers applied to every response.
+# CSP notes:
+# - img/media/connect allow any https:// host because covers, PDFs and APIs
+#   come from many providers (Bloom, Archive.org + its ia*.us mirrors,
+#   eLibrary of Cambodia, Supabase).
+# - frame-src lists the only hosts embedded in iframes (Archive.org embed
+#   player, eLibrary PDF viewer).
+# - worker-src blob: is required by pdf.js; unsafe-eval by its fallback path.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https: wss:; frame-src https://archive.org https://www.elibraryofcambodia.org; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+    Cross-Origin-Opener-Policy = "same-origin"
+
 # Proxy for NVIDIA NIM API (build.nvidia.com) – integrate.api.nvidia.com sends
 # no CORS headers, so browser requests go through this same-origin rewrite.
 [[redirects]]
