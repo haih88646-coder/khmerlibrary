@@ -25,6 +25,11 @@ export default function Favorites() {
           <h1 className={`text-3xl font-bold text-surface-900 dark:text-white ${lang === 'km' ? 'font-khmer' : ''}`}>
             {t('nav.favorites')}
           </h1>
+          {!authLoading && favorites.length > 0 && (
+            <span className={`px-2.5 py-1 bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-sm font-bold rounded-full ${lang === 'km' ? 'font-khmer' : ''}`}>
+              {favorites.length}
+            </span>
+          )}
         </div>
 
         {loading ? (

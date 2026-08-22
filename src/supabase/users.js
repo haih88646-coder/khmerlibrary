@@ -43,3 +43,15 @@ export const getUserFavorites = async (uid) => {
   if (error || !user) return [];
   return user.favorites || [];
 };
+
+// Aggregated favorite counts per book id (incl. external "bloom:"/"elc:"/"ia:"
+// ids). Requires the favorite_counts() RPC from add-favorite-counts.sql.
+export const getFavoriteCounts = async () => {
+  const { data, error } = await supabase.rpc('favorite_counts');
+  if (error) throw error;
+  const counts = {};
+  (data || []).forEach((row) => {
+    counts[row.book_id] = Number(row.fav_count);
+  });
+  return counts;
+};

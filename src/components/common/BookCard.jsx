@@ -3,6 +3,7 @@ import { Heart, Eye, Download, FileText } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { toast } from 'react-toastify';
+import { useFavoriteCounts, invalidateFavoriteCounts } from '../../hooks/useFavoriteCounts';
 import { isArchiveId } from '../../utils/archiveApi';
 import { isElibraryId } from '../../utils/elibraryApi';
 
@@ -10,6 +11,8 @@ export default function BookCard({ book, variant = 'default' }) {
   const { user, isFavorite, toggleFavorite } = useAuth();
   const { lang, t } = useLanguage();
   const navigate = useNavigate();
+  const favoriteCounts = useFavoriteCounts();
+  const favCount = favoriteCounts[book.id] || 0;
   const isArchive = isArchiveId(book.id);
   const isElibrary = isElibraryId(book.id);
 
@@ -24,6 +27,7 @@ export default function BookCard({ book, variant = 'default' }) {
       return;
     }
     await toggleFavorite(book.id);
+    invalidateFavoriteCounts();
   };
 
   const handleDownload = (e) => {
@@ -64,6 +68,7 @@ export default function BookCard({ book, variant = 'default' }) {
           <p className="text-xs text-surface-500 mt-0.5 truncate">{author}</p>
           <div className="flex items-center gap-3 mt-1 text-xs text-surface-400">
             {book.views > 0 && <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{book.views}</span>}
+            {favCount > 0 && <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-red-400" fill="currentColor" />{favCount}</span>}
             {book.fileType && <span className="uppercase font-semibold">{book.fileType}</span>}
           </div>
         </div>
@@ -132,6 +137,11 @@ export default function BookCard({ book, variant = 'default' }) {
           {book.views > 0 && (
             <span className="flex items-center gap-1">
               <Eye className="w-3 h-3" /> {book.views}
+            </span>
+          )}
+          {favCount > 0 && (
+            <span className="flex items-center gap-1">
+              <Heart className="w-3 h-3 text-red-400" fill="currentColor" /> {favCount}
             </span>
           )}
           {book.downloads > 0 && (
