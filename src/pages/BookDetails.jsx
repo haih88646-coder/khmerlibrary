@@ -6,6 +6,7 @@ import EmptyState from '../components/common/EmptyState';
 import Button from '../components/common/Button';
 import BookCard from '../components/common/BookCard';
 import LoginPrompt from '../components/common/LoginPrompt';
+import ShareButtons from '../components/common/ShareButtons';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getBook, incrementViews, incrementDownloads, incrementReads, getBooks } from '../supabase/books';
@@ -270,6 +271,10 @@ export default function BookDetails() {
                 >
                   {isFavorite(book.id) ? t('book.unfavorite') : t('book.favorite')}
                 </Button>
+              </div>
+
+              <div className="pt-4">
+                <ShareButtons title={title} path={`/book/${book.id}`} />
               </div>
             </div>
           </div>

@@ -29,6 +29,14 @@ const en = {
     textKm: 'Donate Text (Khmer)',
     textEn: 'Donate Text (English)'
   },
+  share: {
+    title: 'Share:',
+    telegram: 'Share on Telegram',
+    facebook: 'Share on Facebook',
+    more: 'More options',
+    copy: 'Copy link',
+    copied: 'Link copied!'
+  },
   ai: {
     title: 'Library AI Assistant',
     subtitle: 'Your smart assistant for discovering Khmer library resources.',
