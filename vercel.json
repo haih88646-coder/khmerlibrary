@@ -19,6 +19,10 @@
   ],
   "rewrites": [
     {
+      "source": "/book/:id",
+      "destination": "/api/book-preview?id=:id"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
