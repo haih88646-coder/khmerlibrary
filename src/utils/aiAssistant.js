@@ -5,12 +5,12 @@ import { getSiteSettings } from '../supabase/siteSettings';
 import { getBloomKhmerBooks } from './bloomApi';
 import { searchElibraryBooks } from './elibraryApi';
 
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const OPENROUTER_MODELS_URL = 'https://openrouter.ai/api/v1/models';
-// NVIDIA NIM (build.nvidia.com) – called through a same-origin proxy
-// (/nvidia-api/*) because integrate.api.nvidia.com sends no CORS headers.
-// The proxy is configured in netlify.toml (production) and vite.config.js (dev).
-const NVIDIA_URL = '/nvidia-api/v1/chat/completions';
+// Both AI providers are called through same-origin serverless proxies
+// (/api/openrouter/*, /api/nvidia/*) so the API keys stay on the server
+// (Vercel Edge Functions in production, vite dev proxy locally).
+const OPENROUTER_URL = '/api/openrouter/chat/completions';
+const OPENROUTER_MODELS_URL = '/api/openrouter/models';
+const NVIDIA_URL = '/api/nvidia/v1/chat/completions';
 
 // Preferred chat models (verified live on OpenRouter). The list is refreshed
 // automatically from the /models API; these are only used as fallbacks.
@@ -34,33 +34,14 @@ export const AI_PROVIDERS = [
   { id: 'nvidia', label: 'NVIDIA NIM', models: NVIDIA_MODELS },
 ];
 
-const getProviderKey = (providerId) => {
-  if (providerId === 'nvidia') return import.meta.env.VITE_NVIDIA_API_KEY;
-  return import.meta.env.VITE_OPENROUTER_API_KEY;
-};
-
-const buildRequest = ({ provider, model }, messages) => {
-  const apiKey = getProviderKey(provider);
-  const headers = { 'Content-Type': 'application/json' };
-  let url;
-  if (provider === 'nvidia') {
-    url = NVIDIA_URL;
-    headers.Authorization = `Bearer ${apiKey}`;
-  } else {
-    url = OPENROUTER_URL;
-    headers.Authorization = `Bearer ${apiKey}`;
-    headers['HTTP-Referer'] = window.location.origin;
-    headers['X-Title'] = 'Khmer Digital Library';
-  }
-  return {
-    url,
-    options: {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ model, messages, temperature: 0.6, max_tokens: 1000 }),
-    },
-  };
-};
+const buildRequest = ({ provider, model }, messages) => ({
+  url: provider === 'nvidia' ? NVIDIA_URL : OPENROUTER_URL,
+  options: {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, messages, temperature: 0.6, max_tokens: 1000 }),
+  },
+});
 
 // skip classifier / code-only / preview endpoints – not useful for chat
 const EXCLUDE_PATTERN = /content-safety|guard|moderation|embed|rerank|preview/i;
@@ -269,7 +250,6 @@ export const sendAssistantMessage = async (history) => {
 
   const attempts = [];
   const push = (provider, model) => {
-    if (!getProviderKey(provider)) return;
     if (!attempts.some((a) => a.provider === provider && a.model === model)) {
       attempts.push({ provider, model });
     }
@@ -294,6 +274,7 @@ export const sendAssistantMessage = async (history) => {
   }
 
   let lastError = new Error('failed');
+  let serverNotConfigured = false;
   for (const attempt of attempts) {
     try {
       const { url, options } = buildRequest(attempt, messages);
@@ -301,6 +282,7 @@ export const sendAssistantMessage = async (history) => {
       if (!res.ok) {
         let body = '';
         try { body = (await res.text()).slice(0, 200); } catch { /* ignore */ }
+        if (body.includes('not-configured')) serverNotConfigured = true;
         console.warn(`[AI] ${attempt.provider} model "${attempt.model}" failed (${res.status}):`, body);
         lastError = new Error(`http-${res.status}`);
         continue;
@@ -320,6 +302,9 @@ export const sendAssistantMessage = async (history) => {
     } catch (err) {
       lastError = err;
     }
+  }
+  if (serverNotConfigured) {
+    throw Object.assign(new Error('missing-key'), { code: 'missing-key' });
   }
   throw lastError;
 };
