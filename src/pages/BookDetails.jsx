@@ -231,9 +231,9 @@ export default function BookDetails() {
 
               {desc && (
                 <div className="mb-6">
-                  <h3 className={`text-sm font-semibold text-surface-500 dark:text-surface-400 mb-2 uppercase tracking-wider ${lang === 'km' ? 'font-khmer' : ''}`}>
+                  <h2 className={`text-sm font-semibold text-surface-500 dark:text-surface-400 mb-2 uppercase tracking-wider ${lang === 'km' ? 'font-khmer' : ''}`}>
                     {t('book.description')}
-                  </h3>
+                  </h2>
                   <p className={`text-surface-700 dark:text-surface-300 leading-relaxed ${lang === 'km' ? 'font-khmer' : ''}`}>
                     {desc}
                   </p>

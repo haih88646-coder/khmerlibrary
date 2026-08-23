@@ -37,9 +37,9 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className={`text-sm font-semibold text-white mb-4 uppercase tracking-wider ${lang === 'km' ? 'font-khmer' : ''}`}>
+            <h2 className={`text-sm font-semibold text-white mb-4 uppercase tracking-wider ${lang === 'km' ? 'font-khmer' : ''}`}>
               {t('footer.quickLinks')}
-            </h3>
+            </h2>
             <ul className="space-y-2.5">
               {[
                 { to: '/', label: t('nav.home') },
@@ -57,9 +57,9 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className={`text-sm font-semibold text-white mb-4 uppercase tracking-wider ${lang === 'km' ? 'font-khmer' : ''}`}>
+            <h2 className={`text-sm font-semibold text-white mb-4 uppercase tracking-wider ${lang === 'km' ? 'font-khmer' : ''}`}>
               {t('footer.contact')}
-            </h3>
+            </h2>
             <ul className="space-y-2.5">
               <li className="flex items-center gap-2 text-sm">
                 <Mail className="w-4 h-4" />
@@ -77,9 +77,9 @@ export default function Footer() {
 
         <div className="border-t border-surface-800 mt-10 pt-6">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-            <h3 className={`text-xs font-semibold text-surface-300 uppercase tracking-wider shrink-0 ${lang === 'km' ? 'font-khmer' : ''}`}>
+            <h2 className={`text-xs font-semibold text-surface-300 uppercase tracking-wider shrink-0 ${lang === 'km' ? 'font-khmer' : ''}`}>
               {t('footer.sourcesText')}
-            </h3>
+            </h2>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
               <a
                 href="https://www.elibraryofcambodia.org"

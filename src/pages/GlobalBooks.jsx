@@ -116,10 +116,10 @@ export default function GlobalBooks() {
         </form>
 
         {!loading && !error && total > 0 && (
-          <p className={`text-sm text-surface-500 dark:text-surface-400 mb-6 ${km ? 'font-khmer' : ''}`}>
+          <h2 className={`text-sm text-surface-500 dark:text-surface-400 mb-6 font-normal ${km ? 'font-khmer' : ''}`}>
             {total.toLocaleString()} {t('global.resultsFound')}
             {submittedTerm && <> · "<span className="font-medium">{submittedTerm}</span>"</>}
-          </p>
+          </h2>
         )}
 
         {loading ? (

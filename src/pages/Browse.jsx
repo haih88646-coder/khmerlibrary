@@ -191,6 +191,11 @@ export default function Browse() {
         </div>
 
         {/* Results */}
+        {!loading && books.length > 0 && (
+          <h2 className={`text-xl font-bold text-surface-900 dark:text-white mb-5 ${lang === 'km' ? 'font-khmer' : ''}`}>
+            {t('browse.resultsHeading')}
+          </h2>
+        )}
         {loading ? (
           <Loading />
         ) : books.length === 0 ? (

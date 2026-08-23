@@ -17,9 +17,9 @@ export default function EmptyState({ type = 'books', title, description, action 
       <div className="w-20 h-20 rounded-3xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center mb-5">
         <Icon className="w-10 h-10 text-surface-300 dark:text-surface-500" />
       </div>
-      <h3 className={`text-lg font-semibold text-surface-700 dark:text-surface-300 mb-2 ${lang === 'km' ? 'font-khmer' : ''}`}>
+      <h2 className={`text-lg font-semibold text-surface-700 dark:text-surface-300 mb-2 ${lang === 'km' ? 'font-khmer' : ''}`}>
         {title || t('book.noBooks')}
-      </h3>
+      </h2>
       {description && (
         <p className="text-sm text-surface-500 dark:text-surface-400 max-w-sm mb-5">
           {description}

@@ -88,9 +88,9 @@ export default function AdminLayout() {
             <button onClick={() => { if (window.innerWidth < 1024) setMobileOpen(true); else setSidebarOpen(!sidebarOpen); }} className="p-2 rounded-lg text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">
               <Menu className="w-5 h-5" />
             </button>
-            <h2 className={`text-lg font-semibold text-surface-900 dark:text-white ${lang === 'km' ? 'font-khmer' : ''}`}>
+            <p className={`text-lg font-semibold text-surface-900 dark:text-white ${lang === 'km' ? 'font-khmer' : ''}`}>
               {navItems.find(n => isActive(n.to, n.exact))?.label || t('admin.dashboard')}
-            </h2>
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={toggleTheme} className="p-2 rounded-lg text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">

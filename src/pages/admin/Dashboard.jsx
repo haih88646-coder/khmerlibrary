@@ -63,6 +63,9 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
+      <h1 className={`text-2xl font-bold text-surface-900 dark:text-white ${lang === 'km' ? 'font-khmer' : ''}`}>
+        {t('admin.dashboard')}
+      </h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {statCards.map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="bg-white dark:bg-surface-800 rounded-2xl border border-surface-200 dark:border-surface-700 p-5 flex items-center gap-4">
@@ -81,9 +84,9 @@ export default function AdminDashboard() {
         <div className="bg-white dark:bg-surface-800 rounded-2xl border border-surface-200 dark:border-surface-700 p-6">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-5 h-5 text-primary-500" />
-            <h3 className={`font-semibold text-surface-900 dark:text-white ${lang === 'km' ? 'font-khmer' : ''}`}>
+            <h2 className={`font-semibold text-surface-900 dark:text-white ${lang === 'km' ? 'font-khmer' : ''}`}>
               {t('admin.recentUploads')}
-            </h3>
+            </h2>
           </div>
           <div className="space-y-3">
             {recentBooks.map(book => {
@@ -112,9 +115,9 @@ export default function AdminDashboard() {
         <div className="bg-white dark:bg-surface-800 rounded-2xl border border-surface-200 dark:border-surface-700 p-6">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="w-5 h-5 text-secondary-500" />
-            <h3 className={`font-semibold text-surface-900 dark:text-white ${lang === 'km' ? 'font-khmer' : ''}`}>
+            <h2 className={`font-semibold text-surface-900 dark:text-white ${lang === 'km' ? 'font-khmer' : ''}`}>
               {t('admin.mostPopular')}
-            </h3>
+            </h2>
           </div>
           <div className="space-y-3">
             {popularBooks.map((book, idx) => {

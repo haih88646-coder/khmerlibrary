@@ -45,9 +45,14 @@ export default function Favorites() {
             }
           />
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
-            {books.map(book => <BookCard key={book.id} book={book} />)}
-          </div>
+          <>
+            <h2 className={`text-xl font-bold text-surface-900 dark:text-white mb-6 ${lang === 'km' ? 'font-khmer' : ''}`}>
+              {t('favorites.yourBooks')}
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+              {books.map(book => <BookCard key={book.id} book={book} />)}
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -87,9 +87,9 @@ export default function CategoryManagement() {
             <div key={cat.id} className="bg-white dark:bg-surface-800 rounded-2xl border border-surface-200 dark:border-surface-700 p-5">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className={`font-semibold text-surface-900 dark:text-white ${lang === 'km' ? 'font-khmer' : ''}`}>
-                    {lang === 'km' ? (cat.name_km || cat.name_en) : (cat.name_en || cat.name_km)}
-                  </h3>
+                  <h2 className={`font-semibold text-surface-900 dark:text-white ${lang === 'km' ? 'font-khmer' : ''}`}>
+                      {lang === 'km' ? (cat.name_km || cat.name_en) : (cat.name_en || cat.name_km)}
+                    </h2>
                   {cat.name_km && cat.name_en && (
                     <p className="text-xs text-surface-500 mt-0.5">
                       {lang === 'km' ? cat.name_en : cat.name_km}

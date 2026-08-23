@@ -87,9 +87,9 @@ export default function AuthorManagement() {
                     </span>
                   </div>
                   <div>
-                    <h3 className={`font-semibold text-surface-900 dark:text-white ${lang === 'km' ? 'font-khmer' : ''}`}>
+                    <h2 className={`font-semibold text-surface-900 dark:text-white ${lang === 'km' ? 'font-khmer' : ''}`}>
                       {lang === 'km' ? (author.name_km || author.name_en) : (author.name_en || author.name_km)}
-                    </h3>
+                    </h2>
                     {author.name_km && author.name_en && (
                       <p className="text-xs text-surface-500">{lang === 'km' ? author.name_en : author.name_km}</p>
                     )}

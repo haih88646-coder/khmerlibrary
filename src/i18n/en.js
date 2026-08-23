@@ -76,7 +76,11 @@ const en = {
     sourceLocal: 'My Library',
     sourceElibrary: 'eLibrary of Cambodia',
     searchElibrary: 'Search 4,000+ Khmer books from eLibrary of Cambodia...',
-    searchLocal: 'Search books in My Library...'
+    searchLocal: 'Search books in My Library...',
+    resultsHeading: 'Available Books'
+  },
+  favorites: {
+    yourBooks: 'Your Saved Books'
   },
   home: {
     hero: {
