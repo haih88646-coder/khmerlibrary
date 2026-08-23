@@ -1,4 +1,4 @@
-// Vercel Edge Function – same-origin proxy for NVIDIA NIM.
+// Vercel Edge Function – same-origin proxy for NVIDIA NIM chat completions.
 // Injects the API key server-side so it is never bundled into client JS.
 export const config = { runtime: 'edge' };
 
@@ -7,19 +7,16 @@ export default async function handler(req) {
   if (!apiKey) {
     return Response.json({ error: 'not-configured' }, { status: 500 });
   }
-  const incoming = new URL(req.url);
-  const target = `https://integrate.api.nvidia.com${incoming.pathname.replace(/^\/api\/nvidia/, '')}${incoming.search}`;
 
   const headers = new Headers();
   headers.set('Authorization', `Bearer ${apiKey}`);
   headers.set('Content-Type', req.headers.get('content-type') || 'application/json');
 
-  const res = await fetch(target, {
-    method: req.method,
+  const res = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+    method: 'POST',
     headers,
-    body: req.method === 'GET' || req.method === 'HEAD' ? undefined : req.body,
+    body: req.body,
   });
-
   return new Response(res.body, {
     status: res.status,
     headers: { 'Content-Type': res.headers.get('content-type') || 'application/json' },

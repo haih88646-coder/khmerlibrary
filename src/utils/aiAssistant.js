@@ -18,7 +18,6 @@ const PREFERRED_MODELS = [
   'nvidia/nemotron-3-ultra-550b-a55b:free',
   'z-ai/glm-5.2:free',
   'google/gemma-4-31b-it:free',
-  'openai/gpt-oss-20b:free',
 ];
 
 // NVIDIA NIM models available for live selection in the admin dashboard.
