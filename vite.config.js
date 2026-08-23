@@ -19,8 +19,8 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg', 'logo.svg', 'icons.svg'],
         manifest: {
-          name: 'Khmer Digital Library',
-          short_name: 'Khmer Library',
+          name: 'បណ្ណាល័យឌីជីថលខ្មែរ – Khmer Digital Library',
+          short_name: 'បណ្ណាល័យខ្មែរ',
           description: 'Read and discover Khmer books and documents — free digital library.',
           lang: 'km',
           dir: 'ltr',

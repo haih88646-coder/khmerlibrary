@@ -31,6 +31,10 @@
       "destination": "/api/sitemap"
     },
     {
+      "source": "/favicon.ico",
+      "destination": "/pwa-192.png"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
